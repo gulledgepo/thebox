@@ -1,0 +1,229 @@
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #181a20;
+    color: #e0e0e0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #fafafa;
+}
+
+a, .btn-link {
+    color: #4fc3f7;
+}
+
+a:hover, .btn-link:hover {
+    color: #81d4fa;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #3949ab;
+    border-color: #283593;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem #222, 0 0 0 0.25rem #4fc3f7;
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid #e57373;
+}
+
+.validation-message {
+    color: #e57373;
+}
+
+#blazor-error-ui {
+    display: none !important;
+    background: #333;
+    color: #fff;
+}
+
+#blazor-error-ui .dismiss {
+    color: #fff;
+}
+
+.blazor-error-boundary {
+    background: #b32121;
+    color: #fff;
+}
+
+.loading-progress circle {
+    stroke: #333;
+}
+
+.loading-progress circle:last-child {
+    stroke: #4fc3f7;
+}
+
+code {
+    color: #ffb300;
+    background: #23272b;
+}
+
+/* Layout and component classes */
+.centered-box-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 80vh;   
+}
+
+.box {
+    width: 200px;
+    height: 200px;
+    background-color: #222a36;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: box-shadow 0.2s, background 0.2s;
+}
+
+.box:hover {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+    background-color: #263245;
+}
+
+.box, .box-count {
+    user-select: none;
+}
+
+.box:focus {
+    outline: none;
+}
+
+.box-count {
+    color: #4fc3f7;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-top: 1.5rem;
+}
+
+.box-heart {
+    font-size: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    user-select: none;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+}
+
+.pulse {
+    animation: pulse 0.25s;
+}
+
+.box-heart.pulse {
+    animation: pulse 0.25s;
+}
+
+/* Sidebar (NavMenu) */
+.sidebar {
+    background-color: #20232a;
+    color: #e0e0e0;
+    min-width: 220px;
+    min-height: 100vh;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+}
+
+.player-stats {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    background: #222a36;
+    color: #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    padding: 1rem 1.5rem;
+    min-width: 300px; /* Increased from 220px */
+    width: 340px;     /* Increased from 260px */
+    min-height: 180px;
+    height: 220px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 1rem;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.sacrifice-btn {
+    margin-left: 1rem;
+    background: #3949ab;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+}
+
+.sacrifice-btn:hover {
+    background: #283593;
+}
+
+.player-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Changed from flex-start */
+    gap: 1rem;
+}
+
+.follower-stats {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #222a36;
+    color: #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    padding: 1rem 1.5rem;
+    min-width: 300px;
+    width: 340px;
+    min-height: 180px;
+    height: 220px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 1rem;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.follower-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}

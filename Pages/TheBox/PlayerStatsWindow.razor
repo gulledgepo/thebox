@@ -1,0 +1,28 @@
+﻿@inject PlayerStatsModel PlayerStats
+<div class="player-stats">
+    <div class="player-stat-row">
+        <span>Piety: @PlayerStats.Piety</span>
+        <button class="sacrifice-btn"               
+                @onclick="SacrificeForPiety">
+            Cost: @PlayerStats.PietyCost
+        </button>
+    </div>
+    @if (PlayerStats.HasUnlockedZeal)
+    {
+        <div class="player-stat-row">
+            <span>Zeal: @PlayerStats.Zeal</span>
+            <button class="sacrifice-btn"
+                    @onclick="PlayerStats.SacrificeForZeal">
+                Cost: @PlayerStats.ZealCost
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private void SacrificeForPiety()
+    {
+        PlayerStats.SacrificeForPiety();
+        StateHasChanged();
+    }
+}

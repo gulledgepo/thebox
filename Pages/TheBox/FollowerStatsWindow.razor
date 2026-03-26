@@ -1,0 +1,19 @@
+@inject PlayerStatsModel PlayerStats
+
+<div class="follower-stats">
+    <div class="follower-stat-row">
+        <span>Followers: @PlayerStats.Followers</span>
+        <button class="sacrifice-btn"               
+                @onclick="PurchaseFollower">
+            Cost: @PlayerStats.FollowersCost
+        </button>
+    </div>
+</div>
+
+@code {
+    private void PurchaseFollower()
+    {
+        PlayerStats.BuyFollower();
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,42 @@
+<div class="centered-box">
+    <div class="box @(isPulsing ? "pulse" : "")" tabindex="0" @onclick="HandleClick">
+        <span class="box-heart @(isPulsing ? "pulse" : "")" aria-label="Heart" role="img">❤️</span>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    private bool isPulsing = false;
+    private CancellationTokenSource? _pulseCts;
+
+    private async Task HandleClick()
+    {
+        // Cancel any in-flight pulse reset
+        _pulseCts?.Cancel();
+        _pulseCts = new CancellationTokenSource();
+        var token = _pulseCts.Token;
+
+        isPulsing = false;
+        StateHasChanged();
+        await Task.Delay(1);
+
+        isPulsing = true;
+        StateHasChanged();
+
+        // Reset pulse after animation completes
+        try
+        {
+            await Task.Delay(250, token);
+            isPulsing = false;
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+            // Another click came in, pulse will be restarted
+        }
+
+        await OnClick.InvokeAsync();
+    }
+}

@@ -1,0 +1,79 @@
+@page "/"
+@using PaxstonProject.Pages.TheBox
+@implements IDisposable
+@inject PlayerStatsModel PlayerStats
+
+<div class="centered-box-stack">
+    <Box OnClick="HandleBoxClick" />
+    @if (PlayerStats.Devotion == 0 && !PlayerStats.HasUnlockedStatsWindow)
+    {
+        <span class="box-count">The box is love. Show the box your devotion.</span>
+    }
+    else
+    {
+        <span class="box-count">Devotion: @PlayerStats.Devotion</span>
+    }
+
+    @if (PlayerStats.Followers > 0)
+    {
+        <div class="dps-meter">
+            DPS: @DpsMeter.FormatDps(_dpsMeter.GetTotalDpsEma((double)PlayerStats.ClickValue))
+        </div>
+    }
+</div>
+
+@if (PlayerStats.HasUnlockedStatsWindow)
+{
+    <PlayerStatsWindow />
+}
+@if (PlayerStats.HasUnlockedFollowerStatsWindow)
+{
+    <FollowerStatsWindow />
+}
+
+@code {
+    private DpsMeter _dpsMeter = null!;
+    private CancellationTokenSource? _cts;
+
+    protected override void OnInitialized()
+    {
+        _dpsMeter = new DpsMeter(
+            passiveDpsProvider: () => PlayerStats.GetDevotionPerSecond(),
+            clickValueProvider: () => (double)PlayerStats.ClickValue
+        );
+
+        PlayerStats.OnChange += OnStateChanged;
+
+        _cts = new CancellationTokenSource();
+        _ = RunTickLoopAsync(_cts.Token);
+    }
+
+    private async Task RunTickLoopAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(150));
+        while (await timer.WaitForNextTickAsync(ct))
+        {
+            PlayerStats.TickPassive();
+            _dpsMeter.OnTick();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleBoxClick()
+    {
+        PlayerStats.IncrementDevotion();
+        _dpsMeter.RegisterClick();
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        PlayerStats.OnChange -= OnStateChanged;
+    }
+}
