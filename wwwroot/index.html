@@ -4,21 +4,54 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PaxstonProject</title>
+    <title>The Box</title>
     <base href="/" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="PaxstonProject.styles.css" rel="stylesheet" />
+    <style>
+        .loading-heart {
+            animation: loading-pulse 1.2s ease-in-out infinite;
+        }
+
+        .loading-text {
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            opacity: 0;
+            animation: loading-fade-in 0.6s ease-out 0.3s forwards;
+        }
+
+        @keyframes loading-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+
+        @keyframes loading-fade-in {
+            to { opacity: 0.7; }
+        }
+
+        /* Match the article padding that Blazor's scoped CSS applies */
+        #app > .loading-wrapper {
+            padding-left: 32px;
+            padding-right: 24px;
+            padding-top: 1.1rem;
+        }
+    </style>
 </head>
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="loading-wrapper">
+            <div class="centered-box-stack">
+                <div class="centered-box">
+                    <div class="box">
+                        <span class="box-heart loading-heart" aria-hidden="true">❤️</span>
+                    </div>
+                </div>
+                <span class="box-count loading-text">LOADING</span>
+            </div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">

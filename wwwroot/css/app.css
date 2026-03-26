@@ -57,14 +57,6 @@ a:hover, .btn-link:hover {
     color: #fff;
 }
 
-.loading-progress circle {
-    stroke: #333;
-}
-
-.loading-progress circle:last-child {
-    stroke: #4fc3f7;
-}
-
 code {
     color: #ffb300;
     background: #23272b;
