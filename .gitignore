@@ -16,6 +16,9 @@ obj/
 ## Claude Code
 .claude/
 
+## Local project notes
+GUIDELINES.md
+
 ## OS
 Thumbs.db
 Desktop.ini
