@@ -2,43 +2,80 @@
 @using PaxstonProject.Pages.TheBox
 @implements IDisposable
 @inject PlayerStatsModel PlayerStats
+@inject IJSRuntime JS
 
-<div class="centered-box-stack">
-    <Box OnClick="HandleBoxClick" />
-    @if (PlayerStats.Devotion == 0 && !PlayerStats.HasUnlockedStatsWindow)
+<div @onkeydown="HandleKeyDown" tabindex="0" style="outline:none" id="main-key-listener" @ref="_mainContainer">
+    <LifeForceBar IsVisible="@PlayerStats.HasUnlockedLifeForce" HpPercent="@PlayerStats.HpPercent" />
+
+    <div class="centered-box-stack">
+        <Box OnClick="HandleBoxClick" />
+        @if (PlayerStats.Devotion == 0 && !PlayerStats.HasUnlockedStatsWindow)
+        {
+            <span class="box-count"><AnimatedText Text="The box is love. Show the box your devotion." Reverse="true" /></span>
+        }
+        else
+        {
+            <span class="box-count">Devotion: @PlayerStats.Devotion</span>
+        }
+
+        @if (PlayerStats.Followers > 0)
+        {
+            <div class="dps-meter">
+                DPS: @DpsMeter.FormatDps(_dpsMeter.GetTotalDpsEma((double)PlayerStats.ClickValue))
+            </div>
+        }
+    </div>
+
+    @if (PlayerStats.HasUnlockedStatsWindow)
     {
-        <span class="box-count">The box is love. Show the box your devotion.</span>
+        <PlayerStatsWindow />
     }
-    else
+    @if (PlayerStats.HasUnlockedFollowerStatsWindow)
     {
-        <span class="box-count">Devotion: @PlayerStats.Devotion</span>
+        <FollowerStatsWindow />
     }
 
-    @if (PlayerStats.Followers > 0)
-    {
-        <div class="dps-meter">
-            DPS: @DpsMeter.FormatDps(_dpsMeter.GetTotalDpsEma((double)PlayerStats.ClickValue))
-        </div>
-    }
+    <SacrificeButton IsVisible="@PlayerStats.ShowSacrificeButton" />
+
+    <ClickWhispers @ref="_whispers"
+                   HpPercent="@PlayerStats.HpPercent"
+                   HpBarVisible="@PlayerStats.HasUnlockedLifeForce" />
+
+    <DebugPanel @ref="_debug" />
 </div>
-
-@if (PlayerStats.HasUnlockedStatsWindow)
-{
-    <PlayerStatsWindow />
-}
-@if (PlayerStats.HasUnlockedFollowerStatsWindow)
-{
-    <FollowerStatsWindow />
-}
 
 @code {
     private DpsMeter _dpsMeter = null!;
     private CancellationTokenSource? _cts;
+    private ClickWhispers _whispers = null!;
+    private DebugPanel _debug = null!;
+    private ElementReference _mainContainer;
+
+    // Passive whisper timer — tracks time since last passive whisper
+    private double _whisperTimer = 0;
+
+    // Interval in seconds between passive whispers, driven by HP%
+    // Full HP: ~1.5s, desperate zone: lerps to 0.75s, dark zone: lerps to 0.2s
+    private double GetPassiveWhisperInterval()
+    {
+        if (!PlayerStats.HasUnlockedLifeForce) return double.MaxValue;
+        double hp = PlayerStats.HpPercent;
+        const double desperateStart = 0.65;
+        const double darkStart = 0.30;
+        if (hp >= desperateStart) return 0.75;
+        if (hp > darkStart)
+        {
+            double t = (desperateStart - hp) / (desperateStart - darkStart);
+            return 0.75 + t * (0.35 - 0.75); // 0.75s -> 0.35s
+        }
+        double d = darkStart > 0 ? (darkStart - hp) / darkStart : 1.0;
+        return 0.35 + d * (0.12 - 0.35); // 0.35s -> 0.12s
+    }
 
     protected override void OnInitialized()
     {
         _dpsMeter = new DpsMeter(
-            passiveDpsProvider: () => PlayerStats.GetDevotionPerSecond(),
+            passiveDpsProvider: () => PlayerStats.IsLifeForceDepleted ? 0 : PlayerStats.GetDevotionPerSecond(),
             clickValueProvider: () => (double)PlayerStats.ClickValue
         );
 
@@ -48,21 +85,49 @@
         _ = RunTickLoopAsync(_cts.Token);
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await _mainContainer.FocusAsync();
+    }
+
     private async Task RunTickLoopAsync(CancellationToken ct)
     {
+        const double tickSeconds = 0.150;
         using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(150));
         while (await timer.WaitForNextTickAsync(ct))
         {
             PlayerStats.TickPassive();
             _dpsMeter.OnTick();
+
+            // Passive whisper triggering
+            if (PlayerStats.Followers > 0)
+            {
+                _whisperTimer += tickSeconds;
+                double interval = GetPassiveWhisperInterval();
+                if (_whisperTimer >= interval)
+                {
+                    _whisperTimer = 0;
+                    await InvokeAsync(() => _whispers.OnPassiveTick());
+                }
+            }
+
             await InvokeAsync(StateHasChanged);
         }
     }
 
-    private void HandleBoxClick()
+    private async void HandleBoxClick()
     {
         PlayerStats.IncrementDevotion();
         _dpsMeter.RegisterClick();
+        _whispers.OnClick();
+        await _mainContainer.FocusAsync();
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "`")
+            _debug.Toggle();
     }
 
     private void OnStateChanged()

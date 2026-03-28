@@ -18,8 +18,13 @@
         .loading-text {
             font-weight: 500;
             letter-spacing: 0.15em;
+        }
+
+        .loading-text span {
+            display: inline-block;
             opacity: 0;
-            animation: loading-fade-in 0.6s ease-out 0.3s forwards;
+            transform: translateY(-0.5em);
+            animation: letter-drop 0.4s ease-out forwards;
         }
 
         @keyframes loading-pulse {
@@ -27,8 +32,8 @@
             50% { transform: scale(1.15); opacity: 1; }
         }
 
-        @keyframes loading-fade-in {
-            to { opacity: 0.7; }
+        @keyframes letter-drop {
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Match the article padding that Blazor's scoped CSS applies */
@@ -49,7 +54,7 @@
                         <span class="box-heart loading-heart" aria-hidden="true">❤️</span>
                     </div>
                 </div>
-                <span class="box-count loading-text">LOADING</span>
+                <span class="box-count" style="visibility:hidden">The box is love. Show the box your devotion.</span>
             </div>
         </div>
     </div>

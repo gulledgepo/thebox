@@ -1,0 +1,20 @@
+@inject PlayerStatsModel PlayerStats
+
+@if (IsVisible)
+{
+    <div class="sacrifice-overlay">
+        <button class="sacrifice-life-btn" @onclick="DoSacrifice">
+            S A C R I F I C E
+        </button>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+
+    private void DoSacrifice()
+    {
+        PlayerStats.PerformSacrifice();
+        StateHasChanged();
+    }
+}

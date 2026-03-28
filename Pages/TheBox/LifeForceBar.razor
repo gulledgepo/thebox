@@ -1,0 +1,15 @@
+@inject PlayerStatsModel PlayerStats
+
+@if (IsVisible)
+{
+    <div class="life-force-bar-container">
+        <div class="life-force-bar-fill @(HpPercent <= PlayerStats.LifeForce.SacrificeAppearPct ? "life-force-critical" : "")"
+             style="width:@((HpPercent * 100).ToString("F1"))%">
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public double HpPercent { get; set; } = 1.0;
+}

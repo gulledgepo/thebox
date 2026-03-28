@@ -1,0 +1,77 @@
+@inject PlayerStatsModel PlayerStats
+@implements IDisposable
+
+@if (_visible)
+{
+    <div class="debug-panel">
+        <div class="debug-panel-header">DEBUG</div>
+
+        <div class="debug-row">
+            <span class="debug-label">Devotion</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddDevotion(100)">+100</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddDevotion(1000)">+1k</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddDevotion(10000)">+10k</button>
+            </div>
+        </div>
+
+        <div class="debug-row">
+            <span class="debug-label">Piety (@PlayerStats.Piety)</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddPiety(1)">+1</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddPiety(5)">+5</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddPiety(10)">+10</button>
+            </div>
+        </div>
+
+        <div class="debug-row">
+            <span class="debug-label">Followers (@PlayerStats.Followers)</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddFollowers(1)">+1</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddFollowers(5)">+5</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddFollowers(10)">+10</button>
+            </div>
+        </div>
+
+        <div class="debug-row">
+            <span class="debug-label">Zeal (@PlayerStats.Zeal)</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddZeal(1)">+1</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddZeal(5)">+5</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddZeal(10)">+10</button>
+            </div>
+        </div>
+
+        <div class="debug-row">
+            <span class="debug-label">HP (@((PlayerStats.HpPercent * 100).ToString("0"))%)</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick='() => PlayerStats.Debug_SetHpPercent(1.0)'>Full</button>
+                <button class="debug-btn" @onclick='() => PlayerStats.Debug_SetHpPercent(0.5)'>50%</button>
+                <button class="debug-btn" @onclick='() => PlayerStats.Debug_SetHpPercent(0.1)'>10%</button>
+            </div>
+        </div>
+
+        <div class="debug-hint">` to close</div>
+    </div>
+}
+
+@code {
+    private bool _visible = false;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Keyboard listener registered from JS interop isn't available in WASM without IJSRuntime.
+            // Toggle is handled by Main.razor passing the keydown event.
+        }
+    }
+
+    public void Toggle()
+    {
+        _visible = !_visible;
+        StateHasChanged();
+    }
+
+    public void Dispose() { }
+}

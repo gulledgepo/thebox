@@ -29,6 +29,18 @@ namespace PaxstonProject.Pages.TheBox
             ZealPerLevel = 2.00
         };
 
+        public LifeForceParams LifeForce { get; } = new LifeForceParams();
+
+        // Life force state
+        private double _currentHp;
+        public double CurrentHp => _currentHp;
+        public double HpPercent => LifeForce.MaxHp > 0 ? _currentHp / LifeForce.MaxHp : 1.0;
+        public bool HasUnlockedLifeForce { get; private set; } = false;
+        public bool IsLifeForceDepleted => HasUnlockedLifeForce && _currentHp <= 0;
+        public bool ShowSacrificeButton => HasUnlockedLifeForce
+            && HpPercent <= LifeForce.SacrificeAppearPct
+            && Followers >= LifeForce.SacrificeFollowerCost;
+
         public Clicks Clicks { get; }
 
         // Passive tick state
@@ -53,6 +65,7 @@ namespace PaxstonProject.Pages.TheBox
         public PlayerStatsModel()
         {
             Clicks = new Clicks();
+            _currentHp = LifeForce.MaxHp;
 
             _pietyParams.BaseCost = StatsUnlock;
             Economy.FitHybrid(_pietyParams, 600, 5000);
@@ -73,6 +86,10 @@ namespace PaxstonProject.Pages.TheBox
             if (!HasUnlockedStatsWindow && Devotion >= StatsUnlock)
             {
                 HasUnlockedStatsWindow = true;
+            }
+            if (HasUnlockedLifeForce)
+            {
+                _currentHp = Math.Min(LifeForce.MaxHp, _currentHp + LifeForce.HpPerClick);
             }
             NotifyStateChanged();
         }
@@ -102,6 +119,10 @@ namespace PaxstonProject.Pages.TheBox
                 return;
             Devotion -= cost;
             Followers++;
+            if (!HasUnlockedLifeForce && Followers >= LifeForce.UnlockAtFollowers)
+            {
+                HasUnlockedLifeForce = true;
+            }
             NotifyStateChanged();
         }
 
@@ -116,12 +137,77 @@ namespace PaxstonProject.Pages.TheBox
 
         public static Func<long, double> MakeDR(double k) => f => 1.0 / (1.0 + f / k);
 
+        public void PerformSacrifice()
+        {
+            if (!ShowSacrificeButton)
+                return;
+            Followers = Math.Max(0, Followers - LifeForce.SacrificeFollowerCost);
+            _currentHp = Math.Min(LifeForce.MaxHp, _currentHp + LifeForce.MaxHp * LifeForce.SacrificeRestorePct);
+            NotifyStateChanged();
+        }
+
+        #region Debug / Testing
+
+        public void Debug_AddDevotion(long amount)
+        {
+            Devotion += amount;
+            if (!HasUnlockedStatsWindow && Devotion >= StatsUnlock)
+                HasUnlockedStatsWindow = true;
+            NotifyStateChanged();
+        }
+
+        public void Debug_AddPiety(long amount)
+        {
+            Piety = Math.Max(0, Piety + amount);
+            NotifyStateChanged();
+        }
+
+        public void Debug_AddFollowers(long amount)
+        {
+            Followers = Math.Max(0, Followers + amount);
+            if (!HasUnlockedLifeForce && Followers >= LifeForce.UnlockAtFollowers)
+                HasUnlockedLifeForce = true;
+            NotifyStateChanged();
+        }
+
+        public void Debug_AddZeal(long amount)
+        {
+            Zeal = Math.Max(0, Zeal + amount);
+            NotifyStateChanged();
+        }
+
+        public void Debug_SetHpPercent(double pct)
+        {
+            _currentHp = Math.Clamp(pct, 0.0, 1.0) * LifeForce.MaxHp;
+            NotifyStateChanged();
+        }
+
+        #endregion
+
+        private void TickLifeForce(double dt)
+        {
+            if (!HasUnlockedLifeForce)
+                return;
+
+            double decay = (LifeForce.BaseDecayPerSecond + Followers * LifeForce.DecayPerFollower) * dt;
+            _currentHp = Math.Max(0, _currentHp - decay);
+        }
+
         public void TickPassive(double globalMultiplier = 1.0, Func<long, double>? dr = null)
         {
             var now = DateTime.UtcNow;
             double dt = (now - _lastTickUtc).TotalSeconds;
             if (dt > 1.0) dt = 1.0; // clamp for stability
             _lastTickUtc = now;
+
+            TickLifeForce(dt);
+
+            if (IsLifeForceDepleted)
+            {
+                _passiveRemainder = 0;
+                NotifyStateChanged();
+                return;
+            }
 
             double dps = GetDevotionPerSecond(globalMultiplier, dr);
             double gain = dps * dt + _passiveRemainder;

@@ -1,0 +1,44 @@
+@foreach (var (ch, i) in Characters)
+{
+    @if (ch == ' ')
+    {
+        <span class="anim-letter" style="animation-delay:@($"{GetDelay(i)}ms"); width:0.3em; @GetVariance(i)">&nbsp;</span>
+    }
+    else
+    {
+        <span class="anim-letter" style="animation-delay:@($"{GetDelay(i)}ms"); @GetVariance(i)">@ch</span>
+    }
+}
+
+@code {
+    [Parameter]
+    public string Text { get; set; } = "";
+
+    [Parameter]
+    public int BaseDelay { get; set; } = 0;
+
+    [Parameter]
+    public int StaggerMs { get; set; } = 25;
+
+    [Parameter]
+    public bool Reverse { get; set; } = false;
+
+    private IEnumerable<(char ch, int i)> Characters =>
+        Text.Select((ch, i) => (ch, i));
+
+    private int GetDelay(int i)
+    {
+        if (Reverse)
+            return BaseDelay + (Text.Length - 1 - i) * StaggerMs;
+        return BaseDelay + i * StaggerMs;
+    }
+
+    private string GetVariance(int i)
+    {
+        // Deterministic pseudo-random variance per character
+        var hash = (i * 7919 + Text.Length * 104729) % 1000;
+        var dropEm = 0.3 + (hash % 500) / 500.0 * 0.7; // 0.3em to 1.0em
+        var rotation = (hash % 200 - 100) / 100.0 * 8.0; // -8deg to +8deg
+        return $"--drop-y: {dropEm:F2}em; --drop-rot: {rotation:F1}deg";
+    }
+}
