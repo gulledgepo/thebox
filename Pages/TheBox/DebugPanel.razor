@@ -51,6 +51,29 @@
             </div>
         </div>
 
+        <div class="debug-row">
+            <span class="debug-label">Altars (@PlayerStats.Altars)</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddAltars(1)">+1</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddAltars(5)">+5</button>
+            </div>
+        </div>
+
+        <div class="debug-row">
+            <span class="debug-label">Prophets (@PlayerStats.Prophets)</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddProphets(1)">+1</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddProphets(5)">+5</button>
+            </div>
+        </div>
+
+        <div class="debug-row">
+            <span class="debug-label">Flags</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_SetFirstSacrifice()">1st Sac</button>
+            </div>
+        </div>
+
         <div class="debug-hint">` to close</div>
     </div>
 }
@@ -58,13 +81,9 @@
 @code {
     private bool _visible = false;
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override void OnInitialized()
     {
-        if (firstRender)
-        {
-            // Keyboard listener registered from JS interop isn't available in WASM without IJSRuntime.
-            // Toggle is handled by Main.razor passing the keydown event.
-        }
+        PlayerStats.OnChange += OnStateChanged;
     }
 
     public void Toggle()
@@ -73,5 +92,13 @@
         StateHasChanged();
     }
 
-    public void Dispose() { }
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        PlayerStats.OnChange -= OnStateChanged;
+    }
 }

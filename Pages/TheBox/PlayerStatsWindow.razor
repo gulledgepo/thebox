@@ -1,10 +1,12 @@
-﻿@inject PlayerStatsModel PlayerStats
+@inject PlayerStatsModel PlayerStats
+@implements IDisposable
+
 <div class="player-stats">
     <div class="player-stat-row">
         <span>Piety: @PlayerStats.Piety</span>
-        <button class="sacrifice-btn"               
+        <button class="sacrifice-btn"
                 @onclick="SacrificeForPiety">
-            Cost: @PlayerStats.PietyCost
+            @NumberFormat.Abbreviate(PlayerStats.PietyCost)
         </button>
     </div>
     @if (PlayerStats.HasUnlockedZeal)
@@ -12,17 +14,36 @@
         <div class="player-stat-row">
             <span>Zeal: @PlayerStats.Zeal</span>
             <button class="sacrifice-btn"
-                    @onclick="PlayerStats.SacrificeForZeal">
-                Cost: @PlayerStats.ZealCost
+                    @onclick="SacrificeForZeal">
+                @NumberFormat.Abbreviate(PlayerStats.ZealCost)
             </button>
         </div>
     }
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        PlayerStats.OnChange += OnStateChanged;
+    }
+
     private void SacrificeForPiety()
     {
         PlayerStats.SacrificeForPiety();
-        StateHasChanged();
+    }
+
+    private void SacrificeForZeal()
+    {
+        PlayerStats.SacrificeForZeal();
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        PlayerStats.OnChange -= OnStateChanged;
     }
 }

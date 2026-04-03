@@ -23,7 +23,8 @@ namespace PaxstonProject.Pages.TheBox
 
         // Sacrifice mechanic
         public double SacrificeAppearPct { get; set; } = 0.15;
-        public long SacrificeFollowerCost { get; set; } = 3;
-        public double SacrificeRestorePct { get; set; } = 0.60;
+        public long SacrificeFollowerCost { get; set; } = 5;
+        // HP restored per follower consumed (as % of max HP)
+        public double SacrificeHpPerFollowerPct { get; set; } = 0.10;
     }
 }

@@ -56,6 +56,7 @@
         int every = GetClicksPerWhisper();
         if (_clickCount % every != 0) return;
         SpawnWhisper();
+        StateHasChanged();
     }
 
     // At full HP: every 3 clicks. Desperate zone: every 2. Dark/critical: every click.
@@ -71,6 +72,45 @@
         int count = GetPassiveSpawnCount();
         for (int i = 0; i < count; i++)
             SpawnWhisper();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Called once per game tick to pick up any pending removals. Single render per tick.
+    /// </summary>
+    public void Tick()
+    {
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Burst-spawns love whispers across all zones. Used on sacrifice — the box is fed and happy.
+    /// </summary>
+    public void BurstWhispers(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            int zoneIdx = _rng.Next(SpawnZones.Length);
+            var zone = SpawnZones[zoneIdx];
+            var styleIndex = _rng.Next(6);
+            var text = PickFromPool(Variants, TotalWeight);
+            var glowClasses = new[] { "", "whisper-glow", "whisper-sharp-glow" };
+            var whisper = new WhisperData
+            {
+                Id = _nextId++,
+                Text = text,
+                X = _rng.Next(zone.MinX, zone.MaxX),
+                Y = _rng.Next(zone.MinY, zone.MaxY),
+                Rotation = _rng.Next(-12, 13),
+                Size = 0.8 + _rng.NextDouble() * 0.8,
+                Style = styleIndex,
+                GlowClass = glowClasses[_rng.Next(glowClasses.Length)],
+                UnevenOffsets = _rng.Next(3) == 0 ? GenerateUnevenOffsets(text.Length) : Array.Empty<UnevenOffset>()
+            };
+            _active.Add(whisper);
+            _ = RemoveAfterDelay(whisper.Id);
+        }
+        StateHasChanged();
     }
 
     // Full HP: 1. Desperate: mostly 2, sometimes 1. Dark/critical: 3.
@@ -139,8 +179,6 @@
         };
 
         _active.Add(whisper);
-        StateHasChanged();
-
         _ = RemoveAfterDelay(whisper.Id);
     }
 
@@ -238,7 +276,7 @@
     {
         await Task.Delay(2500);
         _active.RemoveAll(w => w.Id == id);
-        await InvokeAsync(StateHasChanged);
+        // No StateHasChanged here — Tick() picks up removals on the next game loop cycle
     }
 
     private UnevenOffset[] GenerateUnevenOffsets(int length)

@@ -1,4 +1,10 @@
 @inject PlayerStatsModel PlayerStats
+@implements IDisposable
+
+@if (_flashActive)
+{
+    <div class="sacrifice-flash"></div>
+}
 
 @if (IsVisible)
 {
@@ -11,10 +17,26 @@
 
 @code {
     [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnSacrificePerformed { get; set; }
 
-    private void DoSacrifice()
+    private bool _flashActive = false;
+
+    private async void DoSacrifice()
     {
         PlayerStats.PerformSacrifice();
+
+        // Trigger screen flash
+        _flashActive = true;
         StateHasChanged();
+
+        // Notify parent to trigger whisper burst
+        await OnSacrificePerformed.InvokeAsync();
+
+        // Remove flash after animation completes
+        await Task.Delay(800);
+        _flashActive = false;
+        await InvokeAsync(StateHasChanged);
     }
+
+    public void Dispose() { }
 }

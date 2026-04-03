@@ -35,7 +35,13 @@
         <FollowerStatsWindow />
     }
 
-    <SacrificeButton IsVisible="@PlayerStats.ShowSacrificeButton" />
+    <SacrificeButton IsVisible="@PlayerStats.ShowSacrificeButton"
+                     OnSacrificePerformed="HandleSacrifice" />
+
+    @if (PlayerStats.HasPerformedFirstSacrifice)
+    {
+        <MilestoneGrid />
+    }
 
     <ClickWhispers @ref="_whispers"
                    HpPercent="@PlayerStats.HpPercent"
@@ -98,7 +104,9 @@
         while (await timer.WaitForNextTickAsync(ct))
         {
             PlayerStats.TickPassive();
+            PlayerStats.TickSacrifice();
             _dpsMeter.OnTick();
+            _whispers.Tick();
 
             // Passive whisper triggering
             if (PlayerStats.Followers > 0)
@@ -119,9 +127,17 @@
     private async void HandleBoxClick()
     {
         PlayerStats.IncrementDevotion();
-        _dpsMeter.RegisterClick();
-        _whispers.OnClick();
+        if (!PlayerStats.IsLifeForceDepleted)
+        {
+            _dpsMeter.RegisterClick();
+            _whispers.OnClick();
+        }
         await _mainContainer.FocusAsync();
+    }
+
+    private void HandleSacrifice()
+    {
+        // Whisper burst removed — too many DOM elements causes hitching
     }
 
     private void HandleKeyDown(KeyboardEventArgs e)

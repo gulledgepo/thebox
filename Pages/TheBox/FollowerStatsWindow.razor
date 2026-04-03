@@ -1,19 +1,64 @@
 @inject PlayerStatsModel PlayerStats
+@implements IDisposable
 
 <div class="follower-stats">
     <div class="follower-stat-row">
         <span>Followers: @PlayerStats.Followers</span>
-        <button class="sacrifice-btn"               
+        <button class="sacrifice-btn"
                 @onclick="PurchaseFollower">
-            Cost: @PlayerStats.FollowersCost
+            @NumberFormat.Abbreviate(PlayerStats.FollowersCost)
         </button>
     </div>
+    @if (PlayerStats.HasUnlockedAltars)
+    {
+        <div class="follower-stat-row">
+            <span>Altars: @PlayerStats.Altars</span>
+            <button class="sacrifice-btn"
+                    @onclick="PurchaseAltar">
+                @NumberFormat.Abbreviate(PlayerStats.AltarsCost)
+            </button>
+        </div>
+    }
+    @if (PlayerStats.HasUnlockedProphets)
+    {
+        <div class="follower-stat-row">
+            <span>Prophets: @PlayerStats.Prophets</span>
+            <button class="sacrifice-btn"
+                    @onclick="PurchaseProphet">
+                @NumberFormat.Abbreviate(PlayerStats.ProphetsCost)
+            </button>
+        </div>
+    }
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        PlayerStats.OnChange += OnStateChanged;
+    }
+
     private void PurchaseFollower()
     {
         PlayerStats.BuyFollower();
-        StateHasChanged();
+    }
+
+    private void PurchaseAltar()
+    {
+        PlayerStats.BuyAltar();
+    }
+
+    private void PurchaseProphet()
+    {
+        PlayerStats.BuyProphet();
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        PlayerStats.OnChange -= OnStateChanged;
     }
 }

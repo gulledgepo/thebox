@@ -1,0 +1,69 @@
+@inject PlayerStatsModel PlayerStats
+@implements IDisposable
+
+<div class="milestone-grid">
+    @for (int i = 0; i < 12; i++)
+    {
+        var idx = i;
+        if (idx < MilestoneRegistry.All.Count)
+        {
+            var milestone = MilestoneRegistry.All[idx];
+            var state = milestone.GetState(PlayerStats);
+            var canAfford = state == MilestoneState.Available && PlayerStats.Devotion >= milestone.DevotionCost;
+            var stateClass = state switch
+            {
+                MilestoneState.Locked => "milestone-locked",
+                MilestoneState.Available => canAfford ? "milestone-affordable" : "milestone-available",
+                MilestoneState.Completed => "milestone-completed",
+                _ => ""
+            };
+
+            <div class="milestone-tile @stateClass"
+                 @onclick="() => TryComplete(milestone)">
+                <span class="milestone-emoji">@milestone.Emoji</span>
+                <div class="milestone-tooltip">
+                    <div class="milestone-tooltip-name">@milestone.Name</div>
+                    <div class="milestone-tooltip-req">@milestone.GetDisplayText(PlayerStats)</div>
+                    @if (state == MilestoneState.Available)
+                    {
+                        <div class="milestone-tooltip-cost @(canAfford ? "milestone-tooltip-affordable" : "")">
+                            Cost: @NumberFormat.Abbreviate(milestone.DevotionCost)
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="milestone-tile milestone-empty"></div>
+        }
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        PlayerStats.OnChange += OnStateChanged;
+    }
+
+    private void TryComplete(MilestoneDefinition milestone)
+    {
+        var state = milestone.GetState(PlayerStats);
+        if (state != MilestoneState.Available)
+            return;
+        if (PlayerStats.Devotion < milestone.DevotionCost)
+            return;
+
+        PlayerStats.CompleteMilestone(milestone.Id, milestone.DevotionCost);
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        PlayerStats.OnChange -= OnStateChanged;
+    }
+}
