@@ -68,6 +68,32 @@
         </div>
 
         <div class="debug-row">
+            <span class="debug-label">Grace (@PlayerStats.Grace)</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddGrace(1)">+1</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddGrace(5)">+5</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddGrace(10)">+10</button>
+            </div>
+        </div>
+
+        <div class="debug-row">
+            <span class="debug-label">Sanctity (@PlayerStats.Sanctity)</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddSanctity(1)">+1</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddSanctity(5)">+5</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddSanctity(10)">+10</button>
+            </div>
+        </div>
+
+        <div class="debug-row">
+            <span class="debug-label">Influence (@((int)PlayerStats.Influence))</span>
+            <div class="debug-btns">
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddInfluence(10)">+10</button>
+                <button class="debug-btn" @onclick="() => PlayerStats.Debug_AddInfluence(100)">+100</button>
+            </div>
+        </div>
+
+        <div class="debug-row">
             <span class="debug-label">Flags</span>
             <div class="debug-btns">
                 <button class="debug-btn" @onclick="() => PlayerStats.Debug_SetFirstSacrifice()">1st Sac</button>

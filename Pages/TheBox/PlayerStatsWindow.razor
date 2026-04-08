@@ -19,6 +19,26 @@
             </button>
         </div>
     }
+    @if (PlayerStats.HasUnlockedGrace)
+    {
+        <div class="player-stat-row">
+            <span>Grace: @PlayerStats.Grace</span>
+            <button class="sacrifice-btn"
+                    @onclick="BuyGrace">
+                @NumberFormat.Abbreviate(PlayerStats.GraceCost)
+            </button>
+        </div>
+    }
+    @if (PlayerStats.HasUnlockedSanctity)
+    {
+        <div class="player-stat-row">
+            <span>Sanctity: @PlayerStats.Sanctity</span>
+            <button class="sacrifice-btn"
+                    @onclick="BuySanctity">
+                @NumberFormat.Abbreviate(PlayerStats.SanctityCost)
+            </button>
+        </div>
+    }
 </div>
 
 @code {
@@ -35,6 +55,16 @@
     private void SacrificeForZeal()
     {
         PlayerStats.SacrificeForZeal();
+    }
+
+    private void BuyGrace()
+    {
+        PlayerStats.BuyGrace();
+    }
+
+    private void BuySanctity()
+    {
+        PlayerStats.BuySanctity();
     }
 
     private void OnStateChanged()

@@ -8,8 +8,12 @@ namespace PaxstonProject.Pages.TheBox
         // Additional decay per follower owned
         public double DecayPerFollower { get; set; } = 1.5;
 
-        // Hook for future purchasable stat to slow decay
-        public double DecayReductionPerLevel { get; set; } = 0.05;
+        // Grace: each level reduces drain multiplicatively. Formula: drain * 1/(1 + Grace * factor)
+        // Grace 1 = ~17% reduction, Grace 5 = ~50%, Grace 10 = ~67%
+        public double GraceReductionFactor { get; set; } = 0.2;
+
+        // Sanctity: each level adds this much to max HP
+        public double SanctityHpPerLevel { get; set; } = 100.0;
 
         // Clicking restores a small amount of HP
         public double HpPerClick { get; set; } = 2.0;

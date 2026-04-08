@@ -5,7 +5,7 @@
 @inject IJSRuntime JS
 
 <div @onkeydown="HandleKeyDown" tabindex="0" style="outline:none" id="main-key-listener" @ref="_mainContainer">
-    <LifeForceBar IsVisible="@PlayerStats.HasUnlockedLifeForce" HpPercent="@PlayerStats.HpPercent" />
+    <LifeForceBar @ref="_lifeForceBar" IsVisible="@PlayerStats.HasUnlockedLifeForce" HpPercent="@PlayerStats.HpPercent" />
 
     <div class="centered-box-stack">
         <Box OnClick="HandleBoxClick" />
@@ -38,6 +38,11 @@
     <SacrificeButton IsVisible="@PlayerStats.ShowSacrificeButton"
                      OnSacrificePerformed="HandleSacrifice" />
 
+    @if (PlayerStats.Influence > 0)
+    {
+        <div class="influence-counter">Influence: @((int)PlayerStats.Influence)</div>
+    }
+
     @if (PlayerStats.HasPerformedFirstSacrifice)
     {
         <MilestoneGrid />
@@ -55,6 +60,7 @@
     private CancellationTokenSource? _cts;
     private ClickWhispers _whispers = null!;
     private DebugPanel _debug = null!;
+    private LifeForceBar _lifeForceBar = null!;
     private ElementReference _mainContainer;
 
     // Passive whisper timer — tracks time since last passive whisper
@@ -107,6 +113,7 @@
             PlayerStats.TickSacrifice();
             _dpsMeter.OnTick();
             _whispers.Tick();
+            _lifeForceBar.Tick(tickSeconds);
 
             // Passive whisper triggering
             if (PlayerStats.Followers > 0)

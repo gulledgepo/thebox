@@ -118,6 +118,19 @@ code {
     to { opacity: 1; transform: translateY(0) rotate(0deg); }
 }
 
+.influence-counter {
+    position: fixed;
+    bottom: calc(2rem + 110px);
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #9575cd;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+    pointer-events: none;
+}
+
 .box-heart {
     font-size: 3rem;
     display: flex;
@@ -430,6 +443,34 @@ code {
     100% { box-shadow: 0 0 12px rgba(160, 0, 0, 0.8), 0 0 24px rgba(139, 0, 0, 0.4); }
 }
 
+/* Life Force Numbers */
+.life-force-numbers {
+    position: fixed;
+    top: 32px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 200;
+    pointer-events: none;
+}
+
+.life-force-hp-text {
+    font-size: 0.7rem;
+    color: #666;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    letter-spacing: 0.03em;
+}
+
+.life-force-drain-text {
+    font-size: 0.7rem;
+    color: #cc2222;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    letter-spacing: 0.03em;
+    transition: color 0.3s;
+}
+
 @keyframes life-force-critical-pulse {
     0%   { box-shadow: 0 0 12px rgba(160, 0, 0, 0.8), 0 0 24px rgba(139, 0, 0, 0.4); opacity: 0.65; }
     50%  { box-shadow: 0 0 24px rgba(255, 40, 40, 1.0), 0 0 48px rgba(220, 0, 0, 0.7); opacity: 1.0; }
@@ -497,7 +538,6 @@ code {
     grid-template-columns: repeat(6, 48px);
     grid-template-rows: repeat(2, 48px);
     gap: 6px;
-    z-index: 100;
 }
 
 .milestone-tile {
@@ -517,6 +557,10 @@ code {
 
 .milestone-emoji {
     font-size: 1.2rem;
+}
+
+.milestone-locked .milestone-emoji {
+    opacity: 0.3;
 }
 
 /* Hover tooltip */
@@ -569,8 +613,7 @@ code {
 }
 
 .milestone-locked {
-    filter: grayscale(1) brightness(0.4);
-    opacity: 0.5;
+    border-color: #222;
 }
 
 .milestone-available {

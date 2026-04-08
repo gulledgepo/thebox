@@ -126,6 +126,17 @@
         return 3;
     }
 
+    // Whisper size scales up as HP drops
+    // Full HP: 0.7-1.3rem. Desperate: 0.8-1.6rem. Dark/critical: 1.0-2.2rem.
+    private double GetWhisperSize()
+    {
+        if (!HpBarVisible || HpPercent >= 0.65)
+            return 0.7 + _rng.NextDouble() * 0.6;
+        if (HpPercent >= 0.30)
+            return 0.8 + _rng.NextDouble() * 0.8;
+        return 1.2 + _rng.NextDouble() * 2.0;
+    }
+
     private static string ZoneSide(int index) => index switch
     {
         0 or 2 => "left",
@@ -172,7 +183,7 @@
             X = _rng.Next(zone.MinX, zone.MaxX),
             Y = _rng.Next(zone.MinY, zone.MaxY),
             Rotation = _rng.Next(-12, 13),
-            Size = 0.7 + _rng.NextDouble() * 0.6,
+            Size = GetWhisperSize(),
             Style = styleIndex,
             GlowClass = glowClasses[_rng.Next(glowClasses.Length)],
             UnevenOffsets = _rng.Next(5) == 0 ? GenerateUnevenOffsets(text.Length) : Array.Empty<UnevenOffset>()

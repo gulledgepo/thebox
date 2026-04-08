@@ -10,15 +10,19 @@ namespace PaxstonProject.Pages.TheBox
         public long Piety { get; private set; } = 0;
         public long Zeal { get; private set; } = 0;
         public long Followers { get; private set; } = 0;
+        public long PurchasedFollowers { get; private set; } = 0;
+        public double Influence { get; private set; } = 0;
         public long Altars { get; private set; } = 0;
         public long Prophets { get; private set; } = 0;
+        public long Grace { get; private set; } = 0;
+        public long Sanctity { get; private set; } = 0;
 
         private readonly EconomyParams _pietyParams = new EconomyParams();
         private readonly EconomyParams _zealParams = new EconomyParams();
 
         private readonly EconomyParams _followersParams = new EconomyParams
         {
-            BaseCost = 50,
+            BaseCost = 200,
             RoundTo = 5,
             InflationEveryLevels = 10,
             InflationMultiplier = 1.10
@@ -40,6 +44,22 @@ namespace PaxstonProject.Pages.TheBox
             InflationMultiplier = 1.20
         };
 
+        private readonly EconomyParams _graceParams = new EconomyParams
+        {
+            BaseCost = 300,
+            RoundTo = 10,
+            InflationEveryLevels = 8,
+            InflationMultiplier = 1.12
+        };
+
+        private readonly EconomyParams _sanctityParams = new EconomyParams
+        {
+            BaseCost = 500,
+            RoundTo = 25,
+            InflationEveryLevels = 5,
+            InflationMultiplier = 1.15
+        };
+
         public PassiveParams Passive { get; } = new PassiveParams
         {
             BaseRatePerFollower = 2.0,
@@ -54,11 +74,16 @@ namespace PaxstonProject.Pages.TheBox
         // Life force state
         private double _currentHp;
         public double CurrentHp => _currentHp;
-        public double HpPercent => LifeForce.MaxHp > 0 ? _currentHp / LifeForce.MaxHp : 1.0;
+        public double EffectiveMaxHp => LifeForce.MaxHp + Sanctity * LifeForce.SanctityHpPerLevel;
+        public double HpPercent => EffectiveMaxHp > 0 ? _currentHp / EffectiveMaxHp : 1.0;
+
+        // Drain tracking for floating combat text
+        public double LastTickDrain { get; private set; } = 0;
+        public double LastTickRestore { get; private set; } = 0;
         public bool HasUnlockedLifeForce { get; private set; } = false;
         public bool IsLifeForceDepleted => HasUnlockedLifeForce && _currentHp <= 0;
         public bool ShowSacrificeButton => HasUnlockedLifeForce
-            && HpPercent <= LifeForce.SacrificeAppearPct
+            && (Altars > 0 ? IsLifeForceDepleted : HpPercent <= LifeForce.SacrificeAppearPct)
             && Followers >= LifeForce.SacrificeFollowerCost
             && !IsSacrificing;
 
@@ -85,6 +110,8 @@ namespace PaxstonProject.Pages.TheBox
         public bool HasUnlockedZeal { get; private set; } = false;
         public bool HasUnlockedAltars => HasPerformedFirstSacrifice;
         public bool HasUnlockedProphets => CompletedMilestones.Contains("the-church");
+        public bool HasUnlockedGrace => CompletedMilestones.Contains("divine-favor");
+        public bool HasUnlockedSanctity => CompletedMilestones.Contains("consecration");
 
         public int ClickValueBase { get; set; } = 1;
         public BigInteger ClickValue => Clicks.ClickValue(ClickValueBase, Piety);
@@ -93,16 +120,18 @@ namespace PaxstonProject.Pages.TheBox
 
         public BigInteger PietyCost => Economy.HybridCost((int)Piety, _pietyParams);
         public BigInteger ZealCost => Economy.HybridCost((int)Zeal, _zealParams);
-        public BigInteger FollowersCost => Economy.HybridCost((int)Followers, _followersParams);
+        public BigInteger FollowersCost => Economy.HybridCost((int)PurchasedFollowers, _followersParams);
         public BigInteger AltarsCost => Economy.HybridCost((int)Altars, _altarsParams);
         public BigInteger ProphetsCost => Economy.HybridCost((int)Prophets, _prophetsParams);
+        public BigInteger GraceCost => Economy.HybridCost((int)Grace, _graceParams);
+        public BigInteger SanctityCost => Economy.HybridCost((int)Sanctity, _sanctityParams);
 
         private void NotifyStateChanged() => OnChange?.Invoke();
 
         public PlayerStatsModel()
         {
             Clicks = new Clicks();
-            _currentHp = LifeForce.MaxHp;
+            _currentHp = EffectiveMaxHp;
 
             _pietyParams.BaseCost = StatsUnlock;
             Economy.FitHybrid(_pietyParams, 600, 5000);
@@ -110,9 +139,11 @@ namespace PaxstonProject.Pages.TheBox
             _zealParams.BaseCost = 500;
             Economy.FitHybrid(_zealParams, 5000, 10000);
 
-            Economy.FitHybrid(_followersParams, 600, 3500);
+            Economy.FitHybrid(_followersParams, 1200, 5000);
             Economy.FitHybrid(_altarsParams, 1500, 8750);
             Economy.FitHybrid(_prophetsParams, 5000, 30000);
+            Economy.FitHybrid(_graceParams, 3000, 18000);
+            Economy.FitHybrid(_sanctityParams, 6000, 35000);
 
             Clicks.FitCurve(p1: 1, m1: 2.0, p2: 10, m2: 12.0);
             Clicks.SoftcapStart = 36;
@@ -135,7 +166,9 @@ namespace PaxstonProject.Pages.TheBox
             }
             if (HasUnlockedLifeForce)
             {
-                _currentHp = Math.Min(LifeForce.MaxHp, _currentHp + LifeForce.HpPerClick);
+                double restore = LifeForce.HpPerClick;
+                _currentHp = Math.Min(EffectiveMaxHp, _currentHp + restore);
+                LastTickRestore += restore;
             }
             NotifyStateChanged();
         }
@@ -165,6 +198,7 @@ namespace PaxstonProject.Pages.TheBox
                 return;
             Devotion -= cost;
             Followers++;
+            PurchasedFollowers++;
             CheckFollowerUnlocks();
             NotifyStateChanged();
         }
@@ -192,6 +226,25 @@ namespace PaxstonProject.Pages.TheBox
                 return;
             Devotion -= ProphetsCost;
             Prophets++;
+            NotifyStateChanged();
+        }
+
+        public void BuyGrace()
+        {
+            if (!HasUnlockedGrace || Devotion < GraceCost)
+                return;
+            Devotion -= GraceCost;
+            Grace++;
+            NotifyStateChanged();
+        }
+
+        public void BuySanctity()
+        {
+            if (!HasUnlockedSanctity || Devotion < SanctityCost)
+                return;
+            Devotion -= SanctityCost;
+            Sanctity++;
+            // Max HP increased but current HP stays the same — bar "shrinks"
             NotifyStateChanged();
         }
 
@@ -228,10 +281,13 @@ namespace PaxstonProject.Pages.TheBox
                 return false;
 
             Followers = Math.Max(0, Followers - 1);
+            PurchasedFollowers = Math.Max(0, PurchasedFollowers - 1);
             SacrificeTicksRemaining--;
 
             // Restore HP per follower consumed
-            _currentHp = Math.Min(LifeForce.MaxHp, _currentHp + LifeForce.MaxHp * LifeForce.SacrificeHpPerFollowerPct);
+            double sacRestore = EffectiveMaxHp * LifeForce.SacrificeHpPerFollowerPct;
+            _currentHp = Math.Min(EffectiveMaxHp, _currentHp + sacRestore);
+            LastTickRestore += sacRestore;
 
             if (SacrificeTicksRemaining <= 0)
                 IsSacrificing = false;
@@ -295,7 +351,7 @@ namespace PaxstonProject.Pages.TheBox
 
         public void Debug_SetHpPercent(double pct)
         {
-            _currentHp = Math.Clamp(pct, 0.0, 1.0) * LifeForce.MaxHp;
+            _currentHp = Math.Clamp(pct, 0.0, 1.0) * EffectiveMaxHp;
             NotifyStateChanged();
         }
 
@@ -308,6 +364,24 @@ namespace PaxstonProject.Pages.TheBox
         public void Debug_AddProphets(long amount)
         {
             Prophets = Math.Max(0, Prophets + amount);
+            NotifyStateChanged();
+        }
+
+        public void Debug_AddGrace(long amount)
+        {
+            Grace = Math.Max(0, Grace + amount);
+            NotifyStateChanged();
+        }
+
+        public void Debug_AddSanctity(long amount)
+        {
+            Sanctity = Math.Max(0, Sanctity + amount);
+            NotifyStateChanged();
+        }
+
+        public void Debug_AddInfluence(double amount)
+        {
+            Influence = Math.Max(0, Influence + amount);
             NotifyStateChanged();
         }
 
@@ -324,8 +398,11 @@ namespace PaxstonProject.Pages.TheBox
             if (!HasUnlockedLifeForce)
                 return;
 
-            double decay = (LifeForce.BaseDecayPerSecond + Followers * LifeForce.DecayPerFollower) * dt;
+            double baseDrain = LifeForce.BaseDecayPerSecond + Followers * LifeForce.DecayPerFollower;
+            double graceReduction = 1.0 / (1.0 + Grace * LifeForce.GraceReductionFactor);
+            double decay = baseDrain * graceReduction * dt;
             _currentHp = Math.Max(0, _currentHp - decay);
+            LastTickDrain += decay;
         }
 
         private void TickAltars(double dt)
@@ -357,9 +434,12 @@ namespace PaxstonProject.Pages.TheBox
                 return;
 
             Followers -= toConsume;
+            PurchasedFollowers = Math.Max(0, PurchasedFollowers - toConsume);
             // HP restore scales with altar count
             double restorePct = AltarConfig.HpPerFollowerBasePct + Math.Max(0, Altars - 1) * AltarConfig.HpPerFollowerScalingPct;
-            _currentHp = Math.Min(LifeForce.MaxHp, _currentHp + toConsume * LifeForce.MaxHp * restorePct);
+            double altarRestore = toConsume * EffectiveMaxHp * restorePct;
+            _currentHp = Math.Min(EffectiveMaxHp, _currentHp + altarRestore);
+            LastTickRestore += altarRestore;
         }
 
         private void TickProphets(double dt)
@@ -384,6 +464,9 @@ namespace PaxstonProject.Pages.TheBox
             // Always recruit 1 follower per cycle
             Followers += 1;
             CheckFollowerUnlocks();
+
+            // Prophets generate influence
+            Influence += Prophets * ProphetConfig.InfluencePerProphetPerCycle;
         }
 
         public void TickPassive(double globalMultiplier = 1.0, Func<long, double>? dr = null)
@@ -392,6 +475,9 @@ namespace PaxstonProject.Pages.TheBox
             double dt = (now - _lastTickUtc).TotalSeconds;
             if (dt > 1.0) dt = 1.0; // clamp for stability
             _lastTickUtc = now;
+
+            LastTickDrain = 0;
+            LastTickRestore = 0;
 
             TickLifeForce(dt);
             TickAltars(dt);

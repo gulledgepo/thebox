@@ -1,4 +1,5 @@
 @inject PlayerStatsModel PlayerStats
+@implements IDisposable
 
 @if (IsVisible)
 {
@@ -7,9 +8,63 @@
              style="width:@((HpPercent * 100).ToString("F1"))%">
         </div>
     </div>
+
+    <div class="life-force-numbers">
+        <span class="life-force-hp-text">
+            @((int)PlayerStats.CurrentHp) / @((int)PlayerStats.EffectiveMaxHp)
+        </span>
+        <span class="life-force-drain-text">
+            @FormatDrainRate()
+        </span>
+    </div>
 }
 
 @code {
     [Parameter] public bool IsVisible { get; set; }
     [Parameter] public double HpPercent { get; set; } = 1.0;
+
+    private double _drainPerSecond = 0;
+    private double _drainAccumulator = 0;
+    private double _timeAccumulator = 0;
+
+    protected override void OnInitialized()
+    {
+        PlayerStats.OnChange += OnStateChanged;
+    }
+
+    public void Tick(double dt)
+    {
+        if (!IsVisible) return;
+
+        _drainAccumulator += PlayerStats.LastTickDrain;
+        _timeAccumulator += dt;
+
+        // Smooth the drain rate over 1 second windows
+        if (_timeAccumulator >= 1.0)
+        {
+            _drainPerSecond = _drainAccumulator / _timeAccumulator;
+            _drainAccumulator = 0;
+            _timeAccumulator = 0;
+        }
+    }
+
+    private string FormatDrainRate()
+    {
+        if (_drainPerSecond < 0.01 || PlayerStats.IsLifeForceDepleted) return "";
+        // Round to nearest 0.5 to prevent jitter from floating-point accumulation
+        double rounded = Math.Round(_drainPerSecond * 2, MidpointRounding.AwayFromZero) / 2.0;
+        if (rounded >= 100) return $"-{(int)rounded}/s";
+        if (rounded >= 10) return $"-{rounded:F1}/s";
+        return $"-{rounded:F2}/s";
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        PlayerStats.OnChange -= OnStateChanged;
+    }
 }
